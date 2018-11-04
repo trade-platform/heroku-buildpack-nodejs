@@ -63,7 +63,8 @@ trap 'handle_failure' ERR
 [ -f "$BUILD_DIR/package-lock.json" ] && NPM_LOCK=true || NPM_LOCK=false
 
 ### Behavior flags
-[ ! "$NEW_BUILD_SCRIPT_BEHAVIOR" ] && NEW_BUILD_SCRIPT_BEHAVIOR=false
+[ ! "$NEW_BUILD_SCRIPT_BEHAVIOR" ] && NEW_BUILD_SCRIPT_BEHAVIOR=$(read_json "$BUILD_DIR/package.json" ".[\"heroku-build-change-opt-in\"]")
+warn_build_script_behavior_opt_in $NEW_BUILD_SCRIPT_BEHAVIOR | output "$LOG_FILE"
 
 ### Failures that should be caught immediately
 
