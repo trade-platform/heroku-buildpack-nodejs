@@ -33,6 +33,10 @@ source $BP_DIR/lib/cache.sh
 source $BP_DIR/lib/dependencies.sh
 source $BP_DIR/lib/plugin.sh
 
+### Add Java dependency scripts
+source $BP_DIR/lib/common.sh
+source $BP_DIR/lib/maven.sh
+
 export PATH="$BUILD_DIR/.heroku/node/bin:$BUILD_DIR/.heroku/yarn/bin":$PATH
 
 LOG_FILE=$(mktemp -t node-build-log.XXXXX)
@@ -208,6 +212,26 @@ build_dependencies() {
   # TODO: run_if_present 'build'
   log_build_scripts
 }
+
+# BEGIN Customizations to build pdf-service java dependencies
+header "Installing JDK" | output "$LOG_FILE"
+
+export_env $ENV_DIR "." "JAVA_OPTS|JAVA_TOOL_OPTIONS"
+
+install_jdk ${BUILD_DIR}
+
+[ -n "$(find ${BUILD_DIR} -type f -name "*.kt")" ] && mcount "kotlin.source"
+[ -n "$(find ${BUILD_DIR} -type f -name "*.groovy")" ] && mcount "groovy.source"
+
+header "Installing Maven" | output "$LOG_FILE"
+
+header "Compiling Java Dependencies" | output "$LOG_FILE"
+
+install_maven ${BUILD_DIR} ${BUILD_DIR}
+PATH="${BUILD_DIR}/.maven/bin:$PATH"
+cd "${BUILD_DIR}/java-src"
+mvn -DskipTests clean install && mvn dependency:copy-dependencies
+# END Customizations to build pdf-service java dependencies
 
 header "Building dependencies" | output "$LOG_FILE"
 build_dependencies | output "$LOG_FILE"
